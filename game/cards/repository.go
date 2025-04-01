@@ -9,6 +9,7 @@ import (
 	"duel-masters/game/cards/dm06"
 	"duel-masters/game/cards/dm07"
 	"duel-masters/game/cards/dm08"
+	"duel-masters/game/cards/dm09"
 	"duel-masters/game/cards/promo"
 	"duel-masters/game/match"
 )
@@ -620,6 +621,16 @@ var DM08 = map[string]match.CardConstructor{
 	"a4018d92-aef5-4332-b274-016881d6871e": dm08.DracodanceTotem,
 	"f4750fe9-35ce-4bca-b074-a939d18a971d": dm08.TerradragonGamiratar,
 	"a759c6e0-6846-4a4c-aa75-0b8c77b73435": dm08.RootCharger,
+}
+
+var DM09 = map[string]match.CardConstructor{
+	"e8701278-6d71-4cd6-bc92-23690b8de9d2": dm09.StallobTheLifequasher,
+	"eea41196-819f-48a4-ad2d-300bedfec3b7": dm09.MagmadragonOgristVhal,
+	"0dc0f75b-403e-4171-ab65-b45e7e021f41": dm09.StratosphereGiant,
+	"5fc46bb1-486a-4b00-833e-1b2075b1587f": dm09.GlenaVueleTheHypnotic,
+	"c58d4c7e-2569-4c9b-a1b0-93c00187c788": dm09.MarchingMotherboard,
+	"83ac5a3a-1b3d-43f9-a08e-4415e5f478ff": dm09.AzaghastTyrantOfShadows,
+	"313e725b-e8fc-4fc5-988c-f14cc45adff1": dm09.VreemahFreakyMojoTotem,
 }
 
 // Promo is a map with all the card id's in the game and corresponding CardConstructor for promotional exclusive cards

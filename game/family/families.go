@@ -57,3 +57,4 @@ const (
 )
 
 var Dragons = []string{ArmoredDragon, VolcanoDragon, EarthDragon, ZombieDragon}
+var Cybers = []string{CyberCluster, CyberLord, CyberVirus}

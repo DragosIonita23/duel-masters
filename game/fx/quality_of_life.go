@@ -1,6 +1,7 @@
 package fx
 
 import (
+	"duel-masters/game/cnd"
 	"duel-masters/game/family"
 	"duel-masters/game/match"
 	"slices"
@@ -750,6 +751,18 @@ func AnotherOwnCreatureSummoned(card *match.Card, ctx *match.Context) bool {
 	return CreatureSummoned(card, ctx) && event.CardID != card.ID && p == card.Player
 }
 
+func AnotherOwnGhostSummoned(card *match.Card, ctx *match.Context) bool {
+	return anotherOwnCreatureSummonedFilter(card, ctx, func(c *match.Card) bool {
+		return c.HasFamily(family.Ghost)
+	})
+}
+
+func AnotherOwnCyberSummoned(card *match.Card, ctx *match.Context) bool {
+	return anotherOwnCreatureSummonedFilter(card, ctx, func(c *match.Card) bool {
+		return c.SharesAFamily(family.Cybers)
+	})
+}
+
 func AnotherOwnDragonSummoned(card *match.Card, ctx *match.Context) bool {
 	return anotherOwnCreatureSummonedFilter(card, ctx, func(c *match.Card) bool {
 		return c.SharesAFamily(family.Dragons)
@@ -805,6 +818,36 @@ func AnotherOwnCreatureDestroyed(card *match.Card, ctx *match.Context) bool {
 
 	return false
 
+}
+
+func CanBeSummoned(player *match.Player, c *match.Card) bool {
+	return c.HasCondition(cnd.Creature) &&
+		(!c.HasCondition(cnd.Evolution) ||
+			c.HasCondition(cnd.EvolveIntoAnyFamily) ||
+			len(FindFilter(
+				player,
+				match.BATTLEZONE,
+				func(c2 *match.Card) bool {
+					return c2.SharesAFamily(c.Family)
+				},
+			)) > 0)
+}
+
+func OpponentUsedShieldTrigger(card *match.Card, ctx *match.Context) bool {
+	if event, ok := ctx.Event.(*match.ShieldTriggerPlayedEvent); ok {
+		// we check all the cards, not only from the battlezone
+		// in future sets, perhaps shield triggers could be fired from other sources
+		// rather than only from battlezone shield breaks
+		for _, c := range card.Player.Cards() {
+			if c.ID == event.Source {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	return false
 }
 
 func MyDrawStep(card *match.Card, ctx *match.Context) bool {

@@ -38,6 +38,17 @@ func WheneverThisAttacksMayTapDorFCreature() match.HandlerFunc {
 	})
 }
 
+func LookAtOppShields(card *match.Card, ctx *match.Context) {
+	ctx.Match.ShowCards(
+		card.Player,
+		"Your opponent's shield:",
+		Find(
+			ctx.Match.Opponent(card.Player),
+			match.SHIELDZONE,
+		).ProjectImageIDs(),
+	)
+}
+
 // TODO: This is currently nerfed because we make shield selection to early in the attack.
 // In theory with this power they should make a more informed attack
 func WheneverThisAttacksMayLookAtOpShield() match.HandlerFunc {

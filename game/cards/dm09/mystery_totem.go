@@ -6,6 +6,7 @@ import (
 	"duel-masters/game/family"
 	"duel-masters/game/fx"
 	"duel-masters/game/match"
+	"fmt"
 )
 
 // VreemahFreakyMojoTotem ...
@@ -55,6 +56,38 @@ func VreemahFreakyMojoTotem(c *match.Card) {
 					x.AddUniqueSourceCondition(cnd.DoubleBreaker, true, card.ID)
 
 				})
+			})
+		}))
+}
+
+// WhisperingTotem ...
+func WhisperingTotem(c *match.Card) {
+
+	c.Name = "Whispering Totem"
+	c.Power = 2000
+	c.Civ = civ.Nature
+	c.Family = []string{family.MysteryTotem}
+	c.ManaCost = 4
+	c.ManaRequirement = []string{civ.Nature}
+
+	c.Use(fx.Creature,
+		fx.When(fx.Summoned, func(card *match.Card, ctx *match.Context) {
+			fx.SelectFilter(
+				card.Player,
+				ctx.Match,
+				card.Player,
+				match.DECK,
+				fmt.Sprintf("%s's effect: Search your deck. You may take a Whispering Totem from your deck, show that creature to your opponent, and put it into your hand. Then shuffle your deck.", card.Name),
+				1,
+				1,
+				true,
+				func(x *match.Card) bool {
+					return x.Name == card.Name
+				},
+				true,
+			).Map(func(x *match.Card) {
+				card.Player.MoveCard(x.ID, match.DECK, match.HAND, card.ID)
+				ctx.Match.ReportActionInChat(card.Player, fmt.Sprintf("%s was put into %s's hand from his deck due to %s's effect.", x.Name, card.Player.Username(), card.Name))
 			})
 		}))
 }

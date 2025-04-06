@@ -22,3 +22,27 @@ func MarchingMotherboard(c *match.Card) {
 			fx.MayDraw1(card, ctx)
 		}))
 }
+
+// KelpCandle ...
+func KelpCandle(c *match.Card) {
+
+	c.Name = "Kelp Candle"
+	c.Power = 1000
+	c.Civ = civ.Water
+	c.Family = []string{family.CyberVirus}
+	c.ManaCost = 2
+	c.ManaRequirement = []string{civ.Water}
+
+	c.Use(fx.Creature, fx.Blocker, fx.CantAttackCreatures, fx.CantAttackPlayers,
+		func(card *match.Card, ctx *match.Context) {
+			if event, ok := ctx.Event.(*match.Battle); ok {
+				if !event.Blocked || event.Defender != card {
+					return
+				}
+
+				ctx.ScheduleAfter(func() {
+					fx.LookTop4Put1IntoHandReorderRestOnBottomDeck(card, ctx)
+				})
+			}
+		})
+}

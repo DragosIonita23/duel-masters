@@ -4,6 +4,7 @@ import (
 	"duel-masters/game/cnd"
 	"duel-masters/game/family"
 	"duel-masters/game/match"
+	"fmt"
 	"slices"
 )
 
@@ -17,6 +18,28 @@ func (c CardCollection) Map(h func(x *match.Card)) CardCollection {
 	}
 
 	return c
+}
+
+// Project iterates through cards in the collection and selects the ImageID field
+func (c CardCollection) ProjectImageIDs() []string {
+	var imageIDs []string
+
+	for _, card := range c {
+		imageIDs = append(imageIDs, card.ImageID)
+	}
+
+	return imageIDs
+}
+
+// Project iterates through cards in the collection and selects the family field
+func (c CardCollection) ProjectFamilies() []string {
+	var families []string
+
+	for _, card := range c {
+		families = append(families, card.Family...)
+	}
+
+	return families
 }
 
 func (c CardCollection) Or(h func()) {
@@ -43,7 +66,7 @@ func FilterCardList(cards []*match.Card, filter func(*match.Card) bool) (CardCol
 }
 
 // FindFilter returns a CardCollection matching the filter
-func FindFilter(p *match.Player, collection string, h func(card *match.Card) bool) CardCollection {
+func FindFilter(p *match.Player, collection string, h func(x *match.Card) bool) CardCollection {
 
 	result := CardCollection{}
 
@@ -547,6 +570,23 @@ func SpellCast(card *match.Card, ctx *match.Context) bool {
 
 }
 
+// OppSpellCast returns true if the opponent casted a spell
+func OppSpellCast(card *match.Card, ctx *match.Context) bool {
+
+	if event, ok := ctx.Event.(*match.SpellCast); ok {
+
+		if event.MatchPlayerID == 1 {
+			return card.Player != ctx.Match.Player1.Player
+		} else if event.MatchPlayerID == 2 {
+			return card.Player == ctx.Match.Player1.Player
+		}
+
+	}
+
+	return false
+
+}
+
 // Attacking returns true if the card is attacking a player or creature
 func Attacking(card *match.Card, ctx *match.Context) bool {
 
@@ -751,6 +791,12 @@ func AnotherOwnCreatureSummoned(card *match.Card, ctx *match.Context) bool {
 	return CreatureSummoned(card, ctx) && event.CardID != card.ID && p == card.Player
 }
 
+func AnotherOwnGuardianSummoned(card *match.Card, ctx *match.Context) bool {
+	return anotherOwnCreatureSummonedFilter(card, ctx, func(c *match.Card) bool {
+		return c.HasFamily(family.Guardian)
+	})
+}
+
 func AnotherOwnGhostSummoned(card *match.Card, ctx *match.Context) bool {
 	return anotherOwnCreatureSummonedFilter(card, ctx, func(c *match.Card) bool {
 		return c.HasFamily(family.Ghost)
@@ -899,4 +945,162 @@ func Blocked(card *match.Card, ctx *match.Context) bool {
 		return event.Blocked && event.Attacker == card
 	}
 	return false
+}
+
+// Returns a list of all families currently implemented in the game
+// The relative order of the returned list is as follows:
+//  1. Your creatures from the battle zone
+//  2. Your creatures in your hand
+//  3. Your creatures in your mana zone
+//  4. Your creatures in your graveyard
+//  5. Opponent creatures from the battle zone
+//  6. Opponent creatures in his hand
+//  7. Opponent creatures in his mana zone
+//  8. Opponent creatures in his graveyard
+//  9. Rest of families in the game
+func GetAllFamilies(card *match.Card, ctx *match.Context) []string {
+	families := make([]string, 0)
+
+	myBZFamilies := FindFilter(
+		card.Player,
+		match.BATTLEZONE,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	myHandFamilies := FindFilter(
+		card.Player,
+		match.HAND,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	myManaFamilies := FindFilter(
+		card.Player,
+		match.MANAZONE,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	myGraveFamilies := FindFilter(
+		card.Player,
+		match.GRAVEYARD,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	oppBZFamilies := FindFilter(
+		ctx.Match.Opponent(card.Player),
+		match.BATTLEZONE,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	oppHandFamilies := FindFilter(
+		ctx.Match.Opponent(card.Player),
+		match.HAND,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	oppManaFamilies := FindFilter(
+		ctx.Match.Opponent(card.Player),
+		match.MANAZONE,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	oppGraveFamilies := FindFilter(
+		ctx.Match.Opponent(card.Player),
+		match.GRAVEYARD,
+		func(x *match.Card) bool {
+			return !x.HasCondition(cnd.Spell) && len(x.Family) > 0
+		},
+	).ProjectFamilies()
+
+	families = append(families, myBZFamilies...)
+	families = append(families, myHandFamilies...)
+	families = append(families, myManaFamilies...)
+	families = append(families, myGraveFamilies...)
+	families = append(families, oppBZFamilies...)
+	families = append(families, oppHandFamilies...)
+	families = append(families, oppManaFamilies...)
+	families = append(families, oppGraveFamilies...)
+
+	return distinctStrings(families)
+
+}
+
+func ChooseAFamily(card *match.Card, ctx *match.Context, text string) string {
+	allFamilies := GetAllFamilies(card, ctx)
+
+	chosenIndex := MultipleChoiceQuestion(
+		card.Player,
+		ctx.Match,
+		text,
+		allFamilies,
+	)
+
+	if chosenIndex >= 0 && chosenIndex < len(allFamilies) {
+		return allFamilies[chosenIndex]
+	} else {
+		return ""
+	}
+}
+
+func distinctStrings(slice []string) []string {
+	seen := make(map[string]bool) // Map to track seen elements
+	var result []string
+
+	for _, str := range slice {
+		if !seen[str] { // If the element hasn't been seen before
+			seen[str] = true             // Mark it as seen
+			result = append(result, str) // Append to result, maintaining order
+		}
+	}
+	return result
+}
+
+func LookTop4Put1IntoHandReorderRestOnBottomDeck(card *match.Card, ctx *match.Context) {
+	top4CardsDeck := card.Player.PeekDeck(4)
+
+	SelectFromCollection(
+		card.Player,
+		ctx.Match,
+		top4CardsDeck,
+		match.DECK,
+		fmt.Sprintf("%s's effect: Look at the top 4 cards of your deck. Put one of them into your hand. You will put the rest of the cards on the bottom of your deck in any order.", card.Name),
+		1,
+		1,
+		false,
+	).Map(func(x *match.Card) {
+		card.Player.MoveCard(x.ID, match.DECK, match.HAND, card.ID)
+		ctx.Match.ReportActionInChat(card.Player, fmt.Sprintf("%s was put into %s's hand from his deck by %s's effect.", x.Name, card.Player.Username(), card.Name))
+
+		restOfCards := top4CardsDeck[:0]
+		for _, card := range top4CardsDeck {
+			if card.ID != x.ID {
+				restOfCards = append(restOfCards, card)
+			}
+		}
+
+		orderedCardIds := OrderCards(
+			card.Player,
+			ctx.Match,
+			restOfCards,
+			fmt.Sprintf("%s's effect: Order these cards that will be put on the bottom of your deck.", card.Name),
+		)
+
+		if len(orderedCardIds) == len(restOfCards) {
+			card.Player.ReorderCardsOnBottomDeck(restOfCards, orderedCardIds)
+		}
+
+	})
 }

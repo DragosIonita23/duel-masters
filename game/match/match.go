@@ -825,7 +825,7 @@ func (m *Match) NewOrderAction(player *Player, cards []*Card, text string) {
 
 }
 
-// NewMultipleChoiceQuestionAction prompts the user to answer a yes/no question
+// NewMultipleChoiceQuestionAction prompts the user to select from a given list of options
 func (m *Match) NewMultipleChoiceQuestionAction(player *Player, text string, choices []string) {
 
 	msg := &server.ActionMessage{

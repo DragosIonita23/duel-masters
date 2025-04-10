@@ -535,3 +535,49 @@ func VineCharger(c *match.Card) {
 	}))
 
 }
+
+// RelentlessBlitz ...
+func RelentlessBlitz(c *match.Card) {
+
+	c.Name = "Relentless Blitz"
+	c.Civ = civ.Fire
+	c.ManaCost = 3
+	c.ManaRequirement = []string{civ.Fire}
+
+	c.Use(fx.Spell, fx.When(fx.SpellCast, func(card *match.Card, ctx *match.Context) {
+		family := fx.ChooseAFamily(card, ctx, fmt.Sprintf("%s's effect: Choose a race. This turn, each creature of that race can attack untapped creatures and can't be blocked while attacking a creature.", card.Name))
+
+		fx.SelectFilter(
+			card.Player,
+			ctx.Match,
+			card.Player,
+			match.BATTLEZONE,
+			fmt.Sprintf("%s's effect: This turn, each '%s' creature can attack untapped creatures and can't be blocked while attacking a creature.", card.Name, family),
+			1,
+			1,
+			false,
+			func(x *match.Card) bool {
+				return x.HasFamily(family) && x.HasCondition(cnd.Creature)
+			},
+			false,
+		).Map(func(x *match.Card) {
+			ctx.Match.ApplyPersistentEffect(func(ctx2 *match.Context, exit func()) {
+				if x.Zone != match.BATTLEZONE {
+					x.RemoveConditionBySource(card.ID)
+					exit()
+					return
+				}
+
+				if _, ok := ctx2.Event.(*match.EndOfTurnStep); ok {
+					x.RemoveConditionBySource(card.ID)
+					exit()
+					return
+				}
+
+				x.AddUniqueSourceCondition(cnd.AttackUntapped, true, card.ID)
+				fx.CantBeBlockedWhileAttackingACreature(x, ctx2)
+			})
+		})
+	}))
+
+}

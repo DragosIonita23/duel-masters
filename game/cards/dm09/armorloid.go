@@ -72,3 +72,17 @@ func SteamRumblerKain(c *match.Card) {
 		})
 
 }
+
+// AerodactylKooza ...
+func AerodactylKooza(c *match.Card) {
+
+	c.Name = "Aerodactyl Kooza"
+	c.Power = 1000
+	c.Civ = civ.Fire
+	c.Family = []string{family.Armorloid}
+	c.ManaCost = 3
+	c.ManaRequirement = []string{civ.Fire}
+
+	c.Use(fx.Creature, fx.PowerAttacker3000, fx.CantBeBlockedWhileAttackingACreature)
+
+}

@@ -44,7 +44,29 @@ func silvermoonTrailblazerTapAbility(card *match.Card, ctx *match.Context) {
 				return
 			}
 
-			fx.CantBeBlockedByPowerUpTo3000(x, ctx2) //TODO refactor after merging PR #315 from SindaccoFamily
+			fx.CantBeBlockedByPowerUpTo3000(x, ctx2)
 		})
 	})
+}
+
+// StormWranglerTheFurious ...
+func StormWranglerTheFurious(c *match.Card) {
+
+	c.Name = "Storm Wrangler, the Furious"
+	c.Power = 5000
+	c.Civ = civ.Nature
+	c.Family = []string{family.BeastFolk}
+	c.ManaCost = 4
+	c.ManaRequirement = []string{civ.Nature}
+
+	c.Use(fx.Creature, fx.Evolution,
+		func(card *match.Card, ctx *match.Context) {
+			if event, ok := ctx.Event.(*match.Battle); ok && event.Attacker == card && event.Blocked {
+				event.AttackerPower += 3000
+			}
+		},
+		func(card *match.Card, ctx *match.Context) {
+			//TODO
+		})
+
 }

@@ -39,7 +39,7 @@ func JilWarkaTimeGuardian(c *match.Card) {
 	c.ManaCost = 3
 	c.ManaRequirement = []string{civ.Light}
 
-	c.Use(fx.Creature, fx.Blocker, fx.CantAttackPlayers,
+	c.Use(fx.Creature, fx.Blocker(), fx.CantAttackPlayers,
 		fx.When(fx.WouldBeDestroyed, func(card *match.Card, ctx *match.Context) {
 			fx.Select(
 				card.Player,

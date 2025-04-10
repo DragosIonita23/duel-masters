@@ -17,7 +17,7 @@ func BetraleTheExplorer(c *match.Card) {
 	c.ManaCost = 5
 	c.ManaRequirement = []string{civ.Light}
 
-	c.Use(fx.Creature, fx.Blocker,
+	c.Use(fx.Creature, fx.Blocker(),
 		fx.When(fx.EndOfMyTurnCreatureBZ, fx.MayUntapSelf))
 
 }

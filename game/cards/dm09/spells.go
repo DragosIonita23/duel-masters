@@ -186,7 +186,7 @@ func UnifiedResistance(c *match.Card) {
 							return
 						}
 
-						fx.Blocker(x, ctx3) //TODO ForceBlocker after merging
+						fx.ForceBlocker(x, ctx3, card.ID)
 					})
 				})
 

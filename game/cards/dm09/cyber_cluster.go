@@ -18,7 +18,7 @@ func ScoutCluster(c *match.Card) {
 	c.ManaCost = 3
 	c.ManaRequirement = []string{civ.Water}
 
-	c.Use(fx.Creature, fx.Blocker,
+	c.Use(fx.Creature, fx.Blocker(),
 		fx.When(fx.AnotherOwnCreatureSummoned, func(card *match.Card, ctx *match.Context) {
 
 			if card.Zone != match.BATTLEZONE {

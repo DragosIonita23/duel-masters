@@ -33,7 +33,7 @@ func KelpCandle(c *match.Card) {
 	c.ManaCost = 2
 	c.ManaRequirement = []string{civ.Water}
 
-	c.Use(fx.Creature, fx.Blocker, fx.CantAttackCreatures, fx.CantAttackPlayers,
+	c.Use(fx.Creature, fx.Blocker(), fx.CantAttackCreatures, fx.CantAttackPlayers,
 		func(card *match.Card, ctx *match.Context) {
 			if event, ok := ctx.Event.(*match.Battle); ok {
 				if !event.Blocked || event.Defender != card {

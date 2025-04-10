@@ -17,7 +17,7 @@ func ZeppelinCrawler(c *match.Card) {
 	c.ManaCost = 5
 	c.ManaRequirement = []string{civ.Water}
 
-	c.Use(fx.Creature, fx.Blocker, fx.CantAttackCreatures, fx.CantAttackPlayers,
+	c.Use(fx.Creature, fx.Blocker(), fx.CantAttackCreatures, fx.CantAttackPlayers,
 		fx.LookTop4Put1IntoHandReorderRestOnBottomDeck)
 
 }

@@ -509,21 +509,6 @@ func SelectBacksideFilter(p *match.Player, m *match.Match, containerOwner *match
 
 }
 
-// Convenience method to get blockers list for fx.Attacking regardless of the target
-func BlockersList(ctx *match.Context) *[]*match.Card {
-
-	if event, ok := ctx.Event.(*match.AttackCreature); ok {
-		return &event.Blockers
-	}
-
-	if event, ok := ctx.Event.(*match.AttackPlayer); ok {
-		return &event.Blockers
-	}
-
-	return nil
-
-}
-
 // Hooks below:
 // hooks are shorthands for checking if the context matches a certain condition
 
@@ -866,6 +851,20 @@ func AnotherOwnCreatureDestroyed(card *match.Card, ctx *match.Context) bool {
 
 }
 
+func IHaveCastASpell(card *match.Card, ctx *match.Context) bool {
+	if event, ok := ctx.Event.(*match.SpellCast); ok {
+
+		// Check to see if I am the player who casted a spell
+		if (card.Player == ctx.Match.Player1.Player && event.MatchPlayerID == 1) ||
+			(card.Player == ctx.Match.Player2.Player && event.MatchPlayerID == 2) {
+			return true
+		}
+
+	}
+
+	return false
+}
+
 func CanBeSummoned(player *match.Player, c *match.Card) bool {
 	return c.HasCondition(cnd.Creature) &&
 		(!c.HasCondition(cnd.Evolution) ||
@@ -913,7 +912,7 @@ func IDontHaveShields(card *match.Card, ctx *match.Context) bool {
 	return len(shields) == 0
 }
 
-func IHaveShields(card *match.Card, ctx *match.Context) bool {
+func IHaveShields(card *match.Card) bool {
 	shields, err := card.Player.Container(match.SHIELDZONE)
 	if err != nil {
 		return false

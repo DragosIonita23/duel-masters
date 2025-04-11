@@ -2,6 +2,7 @@ package dm09
 
 import (
 	"duel-masters/game/civ"
+	"duel-masters/game/cnd"
 	"duel-masters/game/family"
 	"duel-masters/game/fx"
 	"duel-masters/game/match"
@@ -65,8 +66,51 @@ func StormWranglerTheFurious(c *match.Card) {
 				event.AttackerPower += 3000
 			}
 		},
-		func(card *match.Card, ctx *match.Context) {
-			//TODO
-		})
+		fx.When(fx.AttackConfirmed, func(card *match.Card, ctx *match.Context) {
+			fx.SelectFilter(
+				card.Player,
+				ctx.Match,
+				ctx.Match.Opponent(card.Player),
+				match.BATTLEZONE,
+				fmt.Sprintf("%s's effect: You may choose one of your opponent's untapped creatures that has 'Blocker'. This turn, that creature blocks %s if able and this creature can't be blocked by other creatures.", card.Name, card.Name),
+				1,
+				1,
+				true,
+				func(x *match.Card) bool {
+					return !x.Tapped && x.HasCondition(cnd.Blocker)
+				},
+				false,
+			).Map(func(x *match.Card) {
+				ctx.Match.ApplyPersistentEffect(func(ctx2 *match.Context, exit func()) {
+					if x.Zone != match.BATTLEZONE || card.Zone != match.BATTLEZONE {
+						exit()
+						return
+					}
+
+					if _, ok := ctx2.Event.(*match.EndOfTurnStep); ok {
+						exit()
+						return
+					}
+
+					fx.CantBeBlockedByOtherCreaturesBesidesX(card, ctx2, x)
+
+					if event, ok := ctx2.Event.(*match.Block); ok {
+						if event.Attacker == card {
+							for _, blocker := range event.Blockers {
+								if blocker == x {
+									// We force the opponent to block with this, i.e.
+									// We cancel the Block event normal behaviour
+									ctx2.InterruptFlow()
+
+									// And we manually trigger the battle event
+									// Between this creature and the selected opp blocker
+									ctx2.Match.Battle(card, x, true)
+								}
+							}
+						}
+					}
+				})
+			})
+		}))
 
 }

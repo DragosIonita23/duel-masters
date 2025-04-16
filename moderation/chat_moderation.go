@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const WriteCapacity = 10
-const FlagsTolerance = 4
+const WriteCapacity = 5
+const FlagsTolerance = 3
 
 const (
 	Hate                  = 1
@@ -31,7 +31,7 @@ type ChatModerationService struct {
 	enabled  bool
 	endpoint string
 	auth     string
-	content  map[string]string
+	content  map[string][]string
 	flags    map[string]int
 	writes   int
 }
@@ -47,7 +47,7 @@ func NewChatModerationService(endpoint string, auth string) *ChatModerationServi
 		enabled:  enabled,
 		endpoint: endpoint,
 		auth:     auth,
-		content:  make(map[string]string),
+		content:  make(map[string][]string),
 		flags:    make(map[string]int),
 		writes:   0,
 	}
@@ -60,9 +60,9 @@ func (svc *ChatModerationService) Write(actor string, content string) {
 	s, ok := svc.content[actor]
 
 	if ok {
-		svc.content[actor] = fmt.Sprintf("%s\n%s", s, content)
+		svc.content[actor] = append(s, content)
 	} else {
-		svc.content[actor] = content
+		svc.content[actor] = []string{content}
 	}
 
 	svc.writes++
@@ -91,12 +91,14 @@ func (svc *ChatModerationService) flush() {
 
 	logrus.Debug("Flushing chat moderation cache")
 
-	actors := make([]string, len(svc.content))
-	inputs := make([]string, len(svc.content))
+	actors := []string{}
+	inputs := []string{}
 
-	for a, i := range svc.content {
-		actors = append(actors, a)
-		inputs = append(inputs, i)
+	for a, s := range svc.content {
+		for _, input := range s {
+			actors = append(actors, a)
+			inputs = append(inputs, input)
+		}
 	}
 
 	for k := range svc.content {
@@ -169,7 +171,12 @@ func (svc *ChatModerationService) flush() {
 
 		for i, result := range moderationResp.Results {
 			actor := actors[i]
+			msg := inputs[i]
 			points := 0
+
+			if result.Flagged {
+				logrus.Info(fmt.Sprintf("Chat moderation flagged user %s for message: %s", actor, msg))
+			}
 
 			if result.Categories.Hate {
 				points += Hate

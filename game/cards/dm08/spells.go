@@ -296,7 +296,7 @@ func WaveLance(c *match.Card) {
 		cards["Your creatures"] = myCards
 		cards["Opponent's creatures"] = opponentCards
 
-		selCards := fx.SelectMultipart(
+		fx.SelectMultipart(
 			card.Player,
 			ctx.Match,
 			cards,
@@ -307,11 +307,11 @@ func WaveLance(c *match.Card) {
 		).Map(func(x *match.Card) {
 			ctx.Match.MoveCard(x, match.HAND, card)
 			ctx.Match.ReportActionInChat(x.Player, fmt.Sprintf("%s was moved to its owner's hand by %s", x.Name, card.Name))
-		})
 
-		if len(selCards) > 0 && selCards[0].SharesAFamily(family.Dragons) {
-			fx.MayDraw1(card, ctx)
-		}
+			if x.SharesAFamily(family.Dragons) {
+				fx.MayDraw1(card, ctx)
+			}
+		})
 
 	}))
 }

@@ -33,23 +33,26 @@ func DracodanceTotem(c *match.Card) {
 				card.Player.MoveCard(card.ID, match.BATTLEZONE, match.MANAZONE, card.ID)
 				ctx.Match.ReportActionInChat(card.Player, fmt.Sprintf("%s was moved to manazone instead of being destroyed.", card.Name))
 
-				selCards := fx.SelectFromCollection(
+				fx.SelectFilter(
 					card.Player,
 					ctx.Match,
-					dragonsInMyMana,
+					card.Player,
 					match.MANAZONE,
 					fmt.Sprintf("%s's effect: Choose 1 Dragon from your manazone and put it into your hand.", card.Name),
 					1,
 					1,
 					false,
-				)
-
-				if len(selCards) > 0 {
-					card.Player.MoveCard(selCards[0].ID, match.MANAZONE, match.HAND, card.ID)
-					ctx.Match.ReportActionInChat(card.Player, fmt.Sprintf("%s was moved from manazone to hand.", selCards[0].Name))
-				}
+					func(x *match.Card) bool {
+						return x.SharesAFamily(family.Dragons)
+					},
+					false,
+				).Map(func(x *match.Card) {
+					card.Player.MoveCard(x.ID, match.MANAZONE, match.HAND, card.ID)
+					ctx.Match.ReportActionInChat(card.Player, fmt.Sprintf("%s was put into %s's hand from their manazone.", x.Name, card.Player.Username()))
+				})
 
 			}
 		}),
 	)
+
 }

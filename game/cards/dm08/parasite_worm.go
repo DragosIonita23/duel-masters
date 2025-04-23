@@ -18,4 +18,5 @@ func TyrantWorm(c *match.Card) {
 	c.ManaRequirement = []string{civ.Darkness}
 
 	c.Use(fx.Creature, fx.When(fx.AnotherOwnCreatureSummoned, fx.DestroyYourself))
+
 }

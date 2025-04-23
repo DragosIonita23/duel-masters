@@ -20,4 +20,5 @@ func MotorcycleMutant(c *match.Card) {
 	c.Use(fx.Creature, fx.Blocker(), fx.CantAttackCreatures, fx.CantAttackPlayers,
 		fx.When(fx.AnotherOwnCreatureSummoned, fx.DestroyYourself),
 	)
+
 }
